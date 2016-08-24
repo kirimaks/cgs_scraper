@@ -22,7 +22,7 @@ NEWSPIDER_MODULE = 'craigslist_scraper.spiders'
 #ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 16
+CONCURRENT_REQUESTS = 8
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
@@ -36,7 +36,7 @@ DOWNLOAD_DELAY = 0
 COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
-TELNETCONSOLE_ENABLED = False
+#TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
 #DEFAULT_REQUEST_HEADERS = {
@@ -53,8 +53,6 @@ TELNETCONSOLE_ENABLED = False
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    # 'craigslist_scraper.middlewares.MyCustomDownloaderMiddleware': 543,
-    #'scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware': None,
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     'craigslist_scraper.middlewares.RandomUserAgent': 443,
     'craigslist_scraper.middlewares.RandomProxy': 543,
@@ -93,7 +91,10 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-DOWNLOAD_TIMEOUT=10
+DOWNLOAD_TIMEOUT=3
 RETRY_TIMES=1000
-RETRY_HTTP_CODES=[500, 502, 503, 504, 408, 403, 404]
+RETRY_HTTP_CODES=[500, 502, 503, 504, 408, 403, 404, 407, 409, 434]
 DUPEFILTER_DEBUG = True
+
+#LOG_FILE="log.txt"
+METAREFRESH_ENABLED=False
