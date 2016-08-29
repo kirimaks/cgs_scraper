@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 
 # Scrapy settings for craigslist_scraper project
 #
@@ -22,14 +23,14 @@ NEWSPIDER_MODULE = 'craigslist_scraper.spiders'
 #ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 8
+CONCURRENT_REQUESTS = 1
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 0
+# DOWNLOAD_DELAY = 0
 # The download delay setting will honor only one of:
-#CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 1
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -55,7 +56,7 @@ COOKIES_ENABLED = False
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     'craigslist_scraper.middlewares.RandomUserAgent': 443,
-    'craigslist_scraper.middlewares.RandomProxy': 543,
+    # 'craigslist_scraper.middlewares.RandomProxy': 543,
 }
 
 # Enable or disable extensions
@@ -72,7 +73,7 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
-#AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_ENABLED = False
 # The initial download delay
 #AUTOTHROTTLE_START_DELAY = 5
 # The maximum download delay to be set in case of high latencies
@@ -91,10 +92,14 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-DOWNLOAD_TIMEOUT=3
+DOWNLOAD_TIMEOUT=100
 RETRY_TIMES=1000
-RETRY_HTTP_CODES=[500, 502, 503, 504, 408, 403, 404, 407, 409, 434]
+RETRY_HTTP_CODES=[500, 502, 503, 504, 499, 408, 403, 404, 407, 409, 434, 429]
 DUPEFILTER_DEBUG = True
 
 #LOG_FILE="log.txt"
 METAREFRESH_ENABLED=False
+
+DOWNLOADER_MIDDLEWARES = {'scrapy_crawlera.CrawleraMiddleware': 300}
+CRAWLERA_ENABLED = True
+CRAWLERA_APIKEY = os.environ.get("CRAWLERA_APIKEY")

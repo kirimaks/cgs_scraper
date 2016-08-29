@@ -1,23 +1,21 @@
 from scrapy import Request
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
-from faker import Factory
-import tools
+import tools.select_tools as tools
 
-faker = Factory().create()
+from tools.proxy import ProxyFactory
+
+proxy_factory = ProxyFactory()
 
 
 class RandomProxy:
     def process_request(self, request, spider):
-        spider.logger.debug("*** New Request ***\n({})\n".format(request.url))
-
-        proxy = tools.generate_proxy(spider,
-                                     request.meta.get('retry_times', 0))
-        request.meta['proxy'] = proxy
+        spider.logger.debug("*** New Request:\n( {} )\n".format(request.url))
+        request.meta['proxy'] = str(proxy_factory.gen_proxy())
 
         return None  # Continue this request.
 
     def process_response(self, request, response, spider):
-        spider.logger.debug("Response: ({})".format(response))
+        spider.logger.debug("Response: ( {} )".format(response))
 
         # Get callback before.
         callback = tools.get_callback(spider, request, response)
@@ -38,6 +36,8 @@ class RandomProxy:
 
             return Request(new_url)
 
+        # Store last working proxy.
+        spider.cur_proxy = request.meta['proxy']
         return response
 
 
@@ -46,4 +46,4 @@ class RandomUserAgent(UserAgentMiddleware):
         self.user_agent = user_agent
 
     def process_request(self, request, spider):
-        request.headers.setdefault('User-Agent', faker.user_agent())
+        request.headers.setdefault('User-Agent', tools.generate_ua())

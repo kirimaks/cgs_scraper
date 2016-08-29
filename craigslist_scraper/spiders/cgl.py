@@ -1,7 +1,23 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy import Request
-import tools
+import tools.select_tools as tools
+
+from urllib.parse import urljoin
+
+from subprocess import Popen, PIPE
+import json
+
+from multiprocessing import Pool
+
+
+def start_casper(url):
+    p = Popen(['casperjs', 'casper/parse_resume.js',
+               '--url={}'.format(url)], stdout=PIPE)
+    p.wait()
+    resp = p.stdout.read().decode('utf-8')
+    resp = json.loads(resp)
+    return resp
 
 
 class CglSpider(scrapy.Spider):
@@ -11,7 +27,7 @@ class CglSpider(scrapy.Spider):
         # 'http://www.craigslist.org/about/sites/',
         'http://www.craigslist.org/about/sites/?lang=en&cc=us',
     )
-    handle_httpstatus_list = [301, 302, 307]
+    # handle_httpstatus_list = [301, 302, 307]
 
     def parse(self, response):
 
@@ -24,28 +40,12 @@ following-sibling::div[1]"
         us_city_link_xp = ".//div/ul/li/a/@href"
         links_list = us_city_block.xpath(us_city_link_xp)
 
-        # ##### DEBUG #######
-        self.logger.debug("")
-        self.logger.debug("<<<<<< LINKS ARRAY BEGIN >>>>>>")
-        for link in links_list[:20]:
+        for link in links_list:
             link = tools.make_resume_list_link(link)
-            self.logger.debug(link)
-        self.logger.debug("<<<<<< LINKS ARRAY END >>>>>>\n\n")
-        # ##### DEBUG #######
+            yield Request(link, callback=self.parse_pagination)
 
-        for link in links_list[:20]:
-            link = tools.make_resume_list_link(link)
-            yield Request(link,
-                          callback=self.parse_resume_list)
-
-    def parse_resume_list(self, response):
-        """ Parse resume list of a city """
-
+    def parse_pagination(self, response):
         self.logger.info("*** Parse page: [{}] ***".format(response.url))
-        self.logger.info("\n\n### BODY CONTENT BEGIN ###\n\n {}\
-\n\n### BODY CONTENT END ###\n\n".format(response.body))
-
-        title = response.xpath("//title/text()").extract()[0]
 
         try:
             total_count_xp = "//span[@class='totalcount']/text()"
@@ -53,12 +53,19 @@ following-sibling::div[1]"
         except IndexError:
             resume_number = 99  # There is less than 100 records.
 
-        links = tools.get_resume_links(response)
+        pagination = [i * 100 for i in range((int(resume_number) // 100) + 1)]
 
-        pages = [i * 100 for i in range((int(resume_number) // 100) + 1)]
+        for page in pagination:
+            url = urljoin(response.url, "?s={}".format(page))
+            yield Request(url, callback=self.parse_resume_list)
 
-        yield dict(title=title,
-                   url=response.url,
-                   count=resume_number,
-                   links=links,
-                   pages=str(pages))
+    def parse_resume_list(self, response):
+        self.logger.info("*** Parse page: [{}] ***".format(response.url))
+        resume_urls = tools.get_resume_links(response)
+
+        pool = Pool(4)
+        jobs = [pool.apply_async(start_casper, [url]) for url in resume_urls]
+        pool.close()
+
+        for job in jobs:
+            yield job.get()
